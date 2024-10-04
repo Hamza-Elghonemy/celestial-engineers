@@ -98,6 +98,104 @@ function App() {
       controls.lock();
     };
 
+    // Function to save stars and constellations to a file
+    function saveData() {
+      const data = {
+        stars: stars.map((star) => ({
+          name: star.name,
+          ra: star.ra,
+          de: star.de,
+          x: star.position.x,
+          y: star.position.y,
+          z: star.position.z,
+        })),
+        constellations: constellations.map((constellation) => ({
+          name: constellation.name,
+          lines: constellation.lines.map((line) => ({
+            start: {
+              x: line.geometry.attributes.position.array[0],
+              y: line.geometry.attributes.position.array[1],
+              z: line.geometry.attributes.position.array[2],
+            },
+            end: {
+              x: line.geometry.attributes.position.array[3],
+              y: line.geometry.attributes.position.array[4],
+              z: line.geometry.attributes.position.array[5],
+            },
+          })),
+        })),
+      };
+
+      const blob = new Blob([JSON.stringify(data)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "data.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    // Function to load stars and constellations from a file
+    function loadData(event) {
+      const file = event.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = JSON.parse(e.target.result);
+
+        // Clear existing stars and constellations
+        stars.forEach((star) => scene.remove(star));
+        constellations.forEach((constellation) => {
+          constellation.lines.forEach((line) => scene.remove(line));
+        });
+        stars.length = 0;
+        constellations.length = 0;
+
+        // Load stars
+        data.stars.forEach((starData) => {
+          const starMesh = new THREE.Mesh(starGeometry, starMaterial);
+          starMesh.position.set(starData.x, starData.y, starData.z);
+          starMesh.name = starData.name;
+          starMesh.ra = starData.ra;
+          starMesh.de = starData.de;
+          scene.add(starMesh);
+          stars.push(starMesh);
+        });
+
+        // Load constellations
+        data.constellations.forEach((constellationData) => {
+          const lines = constellationData.lines.map((lineData) => {
+            const geometry = new THREE.BufferGeometry().setFromPoints([
+              new THREE.Vector3(
+                lineData.start.x,
+                lineData.start.y,
+                lineData.start.z
+              ),
+              new THREE.Vector3(lineData.end.x, lineData.end.y, lineData.end.z),
+            ]);
+            const material = new THREE.LineBasicMaterial({ color: 0xffffff });
+            const line = new THREE.Line(geometry, material);
+            scene.add(line);
+            return line;
+          });
+          constellations.push({ name: constellationData.name, lines });
+        });
+      };
+      reader.readAsText(file);
+    }
+
+    // Add event listeners for save and load buttons
+    document.getElementById("btnSave").onclick = saveData;
+
+    document.getElementById("btnLoad").onclick = () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "application/json";
+      input.onchange = loadData;
+      input.click();
+    };
+
     window.addEventListener("keydown", (event) => {
       event.preventDefault();
       if (event.key === "escape") {
@@ -156,44 +254,28 @@ function App() {
       if (name) {
         constellations.push({ name, lines: [...lines] });
         lines = []; // Reset current lines
-        drawConstellationName(name);
+        console.log(constellations);
+      } else {
+        console.log("no");
+        scene.remove(...lines);
+        lines = [];
       }
-    }
-
-    const labelRenderer = new CSS2DRenderer();
-    labelRenderer.setSize(window.innerWidth, window.innerHeight);
-    labelRenderer.domElement.style.position = "absolute";
-    labelRenderer.domElement.style.top = "0px";
-    document.body.appendChild(labelRenderer.domElement);
-
-    function drawConstellationName(name) {
-      const lineGeometry =
-        constellations[constellations.length - 1].lines[0].geometry;
-      const positions = lineGeometry.attributes.position.array;
-
-      // Calculate the center of the shape to place the name
-      let xSum = 0,
-        ySum = 0,
-        zSum = 0;
-      for (let i = 0; i < positions.length; i += 3) {
-        xSum += positions[i];
-        ySum += positions[i + 1];
-        zSum += positions[i + 2];
-      }
-      const centerX = xSum / (positions.length / 3);
-      const centerY = ySum / (positions.length / 3);
-      const centerZ = zSum / (positions.length / 3);
-
-      // Load font
     }
 
     window.addEventListener("contextmenu", (event) => {
       event.preventDefault();
-      if (lastStar) {
+      if (lastStar && lines.length > 0) {
         lastStar = null;
         promptForConstellationName();
       }
     });
+
+    // Function to highlight lines of a constellation
+    function highlightConstellation(constellation, highlight) {
+      constellation.lines.forEach((line) => {
+        line.material.color.set(highlight ? 0xff0000 : 0xffffff); // Highlight in red or reset to white
+      });
+    }
 
     // Update raycasting section to use the detection meshes
     window.addEventListener("mousemove", (event) => {
@@ -201,26 +283,53 @@ function App() {
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObjects(stars); // Use detection meshes for raycasting
 
-      if (intersects.length > 0) {
-        const intersectedStar = intersects[0].object;
-        // Update tooltip content and position
-        tooltip.innerHTML = `
-      Name: ${intersectedStar.name}<br>
-      RA: ${intersectedStar.ra.toFixed(2)} hours<br>
-      DE: ${intersectedStar.de.toFixed(2)} degrees
-    `;
-        tooltip.style.display = "block";
-        tooltip.style.left = `${event.clientX + 10}px`;
-        tooltip.style.top = `${event.clientY + 10}px`;
+      // Check for intersections with lines
+      const lineIntersects = raycaster.intersectObjects(lines);
+      if (lineIntersects.length > 0) {
+        const intersectedLine = lineIntersects[0].object;
+        const constellation = constellations.find((c) =>
+          c.lines.includes(intersectedLine)
+        );
+
+        if (constellation) {
+          // Update tooltip content and position
+          tooltip.innerHTML = `Constellation: ${constellation.name}`;
+          tooltip.style.display = "block";
+          tooltip.style.left = `${event.clientX + 10}px`;
+          tooltip.style.top = `${event.clientY + 10}px`;
+
+          // Highlight the constellation lines
+          highlightConstellation(constellation, true);
+        }
       } else {
-        tooltip.style.display = "none";
+        // Reset all constellations' lines to their original color
+        constellations.forEach((c) => highlightConstellation(c, false));
+
+        // Check for intersections with stars
+        const starIntersects = raycaster.intersectObjects(stars);
+        if (starIntersects.length > 0) {
+          const intersectedStar = starIntersects[0].object;
+
+          // Update tooltip content and position
+          tooltip.innerHTML = `
+        Name: ${intersectedStar.name}<br>
+        RA: ${intersectedStar.ra.toFixed(2)} hours<br>
+        DE: ${intersectedStar.de.toFixed(2)} degrees
+      `;
+          tooltip.style.display = "block";
+          tooltip.style.left = `${event.clientX + 10}px`;
+          tooltip.style.top = `${event.clientY + 10}px`;
+        } else {
+          tooltip.style.display = "none";
+        }
       }
     });
 
+    // Hide tooltip when mouse leaves the window
     window.addEventListener("mouseout", () => {
       tooltip.style.display = "none";
+      constellations.forEach((c) => highlightConstellation(c, false));
     });
 
     function animate() {
@@ -231,7 +340,6 @@ function App() {
         controls2.update();
       }
       renderer.render(scene, camera);
-      labelRenderer.render(scene, camera);
     }
 
     animate();
@@ -239,10 +347,54 @@ function App() {
 
   return (
     <>
-      <div className="absolute left-0 top-0">STUCK</div>
-      <button id="btnPlay" className="absolute left-20 top-0 bg-slate-400">
-        Play
-      </button>
+      <div className="absolute left-0 top-0 flex z-10">
+        <button
+          id="btnSave"
+          data-dropdown-toggle="dropdown"
+          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          type="button"
+        >
+          Save
+          <path
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="m1 1 4 4 4-4"
+          />
+        </button>
+        <button
+          id="btnLoad"
+          data-dropdown-toggle="dropdown"
+          className="text-white ml-2 mr-2 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          type="button"
+        >
+          Load
+          <path
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="m1 1 4 4 4-4"
+          />
+        </button>
+        <button
+          id="btnPlay"
+          data-dropdown-toggle="dropdown"
+          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          type="button"
+        >
+          Play{" "}
+          <path
+            stroke="currentColor"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="m1 1 4 4 4-4"
+          />
+        </button>
+      </div>
+
       <canvas id="myThreeJsCanvas"></canvas>
     </>
   );
