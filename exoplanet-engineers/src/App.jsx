@@ -1,23 +1,24 @@
 import { useEffect } from 'react'
 import * as THREE from 'three';
+import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
+import { FlyControls } from 'three/addons/controls/FlyControls.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 
 function App() {
 
   useEffect(()=>{
+
+
 const scene = new THREE.Scene();
 // Perspective parameters: POV, Aspect Ratio, View Frustum (near, far)
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-
-
 const canvas=document.getElementById('myThreeJsCanvas');
 const renderer = new THREE.WebGLRenderer({canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
 
-
 // Set up camera position
-camera.position.set(0, 10, 0); // Position the camera at the surface of the planet
+camera.position.set(0, 1.8, 0); // Position the camera at the surface of the planet
 
 // Add a basic ambient light
 const ambientLight = new THREE.AmbientLight(0xffffff);
@@ -62,15 +63,31 @@ const mockStarData = generateStarData(100);
 
 // Create geometry to hold star positions
 const starGeometry = new THREE.BufferGeometry();
-const starMaterial = new THREE.PointsMaterial({
-    color: 0xffffff,
+const starMaterial = new THREE.ShaderMaterial({
+    uniforms: {
+        color: { value: new THREE.Color(0xffffff) },
+    },
+    vertexShader: `
+        void main() {
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            gl_PointSize = 5.0; // Adjust size as needed
+        }
+    `,
+    fragmentShader: `
+        uniform vec3 color;
+        void main() {
+            gl_FragColor = vec4(color, 1.0);
+            float dist = length(gl_PointCoord - vec2(0.5, 0.5));
+            if (dist > 0.5) discard; // Make the point a circle
+        }
+    `,
+    transparent: true
 });
 
 // Create arrays to hold star data
 const positions = [];
 const names = [];
 
-// Add each star's position and adjust its size based on magnitude
 // Add each star's position and adjust its size based on magnitude
 mockStarData.forEach(star => {
     positions.push(star.x, star.y, star.z); // Position in 3D space
@@ -131,18 +148,41 @@ function createLatLongGrid() {
 // Add latitude and longitude grid to the scene
 // createLatLongGrid();
 
-// Orbit Controls for looking around
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.dampingFactor = 0.05;
-controls.enablePan = true;
-controls.enableZoom = true; // Enable zooming
-controls.target.set(0, 0, 0); // Set the target to the center of the sphere
+const controls= new FirstPersonControls(camera,renderer.domElement);
+const clock= new THREE.Clock();
+controls.movementSpeed=0;
+controls.lookSpeed=0.2;
 
-// Set min and max zoom distances
-controls.minDistance = 2; // Minimum zoom distance (equal to planet's radius)
-controls.maxDistance = 20; // Maximum zoom distance (adjust as needed)
-controls.update(); // Update controls to reflect the target position
+const loader = new THREE.CubeTextureLoader();
+  const texture = loader.load([
+    '../public/skybox/right.png',
+    '../public/skybox/left.png',
+    '../public/skybox/top.png',
+    '../public/skybox/bottom.png',
+    '../public/skybox/front.png',
+    '../public/skybox/back.png',
+  ]);
+  scene.background = texture;
+
+  const textureLoader = new THREE.TextureLoader();
+  const circleTexture = textureLoader.load('../public/exoplanets/4k_ceres_fictional.jpg');
+
+  // Adjust texture settings
+  circleTexture.wrapS = THREE.RepeatWrapping;
+  circleTexture.wrapT = THREE.RepeatWrapping;
+  circleTexture.minFilter = THREE.LinearFilter;
+  circleTexture.magFilter = THREE.LinearFilter;
+
+  // Create circle geometry and material with the texture
+  const circleGeometry = new THREE.CircleGeometry(100, 32); // 100 units radius, 128 segments
+  const circleMaterial = new THREE.MeshBasicMaterial({ map: circleTexture, side: THREE.DoubleSide });
+  const circle = new THREE.Mesh(circleGeometry, circleMaterial);
+  circle.rotation.x = Math.PI / 2; // Rotate the circle to lie flat on the XZ plane
+  scene.add(circle);
+
+ 
+
+//controls.update(); // Update controls to reflect the target position
 
 // Create a tooltip element
 const tooltip = document.createElement('div');
@@ -154,6 +194,14 @@ tooltip.style.borderRadius = '3px';
 tooltip.style.pointerEvents = 'none'; // Make sure the tooltip doesn't block mouse events
 tooltip.style.display = 'none'; // Initially hidden
 document.body.appendChild(tooltip);
+
+const radius = 10;
+const sectors = 16;
+const rings = 8;
+const divisions = 64;
+
+const helper = new THREE.PolarGridHelper( radius, sectors, rings, divisions );
+scene.add( helper );
 
 // Mouse position and raycaster setup
 const mouse = new THREE.Vector2();
@@ -183,28 +231,28 @@ function animate() {
     requestAnimationFrame(animate);
 
     // Update the raycaster with the mouse position
-    raycaster.setFromCamera(mouse, camera);
+    // raycaster.setFromCamera(mouse, camera);
 
-    // Calculate objects intersecting the picking ray
-    const intersects = raycaster.intersectObject(stars);
+    // // Calculate objects intersecting the picking ray
+    // const intersects = raycaster.intersectObject(stars);
 
-    if (intersects.length > 0) {
-        const starIndex = intersects[0].index;
-        const starData = mockStarData[starIndex]; // Get the star data from the mock data
-        tooltip.innerHTML = `
-            Name: ${starData.name}<br>
-            RA: ${starData.ra.toFixed(2)} hours<br>
-            DE: ${starData.de.toFixed(2)} degrees
-        `;
-        tooltip.style.display = 'block';
-        tooltipVisible = true; // Set tooltip as visible
-    } else {
-        tooltip.style.display = 'none';
-        tooltipVisible = false; // Hide the tooltip
-    }
+    // if (intersects.length > 0) {
+    //     const starIndex = intersects[0].index;
+    //     const starData = mockStarData[starIndex]; // Get the star data from the mock data
+    //     tooltip.innerHTML = `
+    //         Name: ${starData.name}<br>
+    //         RA: ${starData.ra.toFixed(2)} hours<br>
+    //         DE: ${starData.de.toFixed(2)} degrees
+    //     `;
+    //     tooltip.style.display = 'block';
+    //     tooltipVisible = true; // Set tooltip as visible
+    // } else {
+    //     tooltip.style.display = 'none';
+    //     tooltipVisible = false; // Hide the tooltip
+    // }
 
     // Orbit controls update
-    controls.update();
+    controls.update(clock.getDelta());
 
     // Render the scene
     renderer.render(scene, camera);
