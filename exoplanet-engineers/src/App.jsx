@@ -3,7 +3,7 @@ import * as THREE from 'three';
 import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
 import { FlyControls } from 'three/addons/controls/FlyControls.js';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-
+import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
 
 function App() {
 
@@ -148,7 +148,7 @@ function createLatLongGrid() {
 // Add latitude and longitude grid to the scene
 // createLatLongGrid();
 
-const controls= new FirstPersonControls(camera,renderer.domElement);
+const controls= new PointerLockControls(camera,renderer.domElement);
 const clock= new THREE.Clock();
 controls.movementSpeed=0;
 controls.lookSpeed=0.2;
@@ -194,62 +194,78 @@ tooltip.style.borderRadius = '3px';
 tooltip.style.pointerEvents = 'none'; // Make sure the tooltip doesn't block mouse events
 tooltip.style.display = 'none'; // Initially hidden
 document.body.appendChild(tooltip);
+// Tooltip setup
+tooltip.style.display = 'none'; // Initially hidden
+document.body.appendChild(tooltip);
 
-const radius = 10;
-const sectors = 16;
-const rings = 8;
-const divisions = 64;
 
-const helper = new THREE.PolarGridHelper( radius, sectors, rings, divisions );
-scene.add( helper );
 
 // Mouse position and raycaster setup
 const mouse = new THREE.Vector2();
+document.getElementById('btnPlay').onclick=()=>{
+    controls.lock();
+}
+// Handle mouse move event to update mouse coordinates
+window.addEventListener('wheel', (event) => {
+    if (!controls.isLocked)
+        return
+    // Adjust the camera's field of view (FOV) based on the scroll direction
+    if (event.deltaY < 0) {
+        camera.fov = Math.max(10, camera.fov - 2); // Zoom in
+    } else {
+        camera.fov = Math.min(75, camera.fov + 2); // Zoom out
+    }
+    camera.updateProjectionMatrix(); // Update the camera projection matrix
+});
+window.addEventListener('mousemove', (event) => {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+});
+
 const raycaster = new THREE.Raycaster();
 let tooltipVisible = false; // Track tooltip visibility
+// Handle mouse move event to update mouse coordinates
+window.addEventListener('mousemove', (event) => {
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-// // Handle mouse move event to update mouse coordinates
-// window.addEventListener('mousemove', (event) => {
-//     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-//     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    // Update tooltip position if it's visible
+    if (tooltipVisible) {
+        tooltip.style.left = `${event.clientX + 10}px`; // Adjust for correct positioning
+        tooltip.style.top = `${event.clientY + 10}px`; // Adjust for correct positioning
+    }
+});
 
-//     // Update tooltip position if it's visible
-//     if (tooltipVisible) {
-//         tooltip.style.left = `${event.clientX + 10}px`; // Adjust for correct positioning
-//         tooltip.style.top = `${event.clientY + 10}px`; // Adjust for correct positioning
-//     }
-// });
-
-// // Hide tooltip when mouse leaves the window
-// window.addEventListener('mouseout', () => {
-//     tooltip.style.display = 'none';
-//     tooltipVisible = false; // Hide the tooltip
-// });
+// Hide tooltip when mouse leaves the window
+window.addEventListener('mouseout', () => {
+    tooltip.style.display = 'none';
+    tooltipVisible = false; // Hide the tooltip
+});
 
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
 
-    // Update the raycaster with the mouse position
-    // raycaster.setFromCamera(mouse, camera);
+    //Update the raycaster with the mouse position
+    raycaster.setFromCamera(mouse, camera);
 
-    // // Calculate objects intersecting the picking ray
-    // const intersects = raycaster.intersectObject(stars);
+    // Calculate objects intersecting the picking ray
+    const intersects = raycaster.intersectObject(stars);
 
-    // if (intersects.length > 0) {
-    //     const starIndex = intersects[0].index;
-    //     const starData = mockStarData[starIndex]; // Get the star data from the mock data
-    //     tooltip.innerHTML = `
-    //         Name: ${starData.name}<br>
-    //         RA: ${starData.ra.toFixed(2)} hours<br>
-    //         DE: ${starData.de.toFixed(2)} degrees
-    //     `;
-    //     tooltip.style.display = 'block';
-    //     tooltipVisible = true; // Set tooltip as visible
-    // } else {
-    //     tooltip.style.display = 'none';
-    //     tooltipVisible = false; // Hide the tooltip
-    // }
+    if (intersects.length > 0) {
+        const starIndex = intersects[0].index;
+        const starData = mockStarData[starIndex]; // Get the star data from the mock data
+        tooltip.innerHTML = `
+            Name: ${starData.name}<br>
+            RA: ${starData.ra.toFixed(2)} hours<br>
+            DE: ${starData.de.toFixed(2)} degrees
+        `;
+        tooltip.style.display = 'block';
+        tooltipVisible = true; // Set tooltip as visible
+    } else {
+        tooltip.style.display = 'none';
+        tooltipVisible = false; // Hide the tooltip
+    }
 
     // Orbit controls update
     controls.update(clock.getDelta());
@@ -263,6 +279,7 @@ animate();
 
   return (
     <>
+    <button id='btnPlay'>Play</button>
    <canvas id="myThreeJsCanvas"></canvas>
     </>
   )
