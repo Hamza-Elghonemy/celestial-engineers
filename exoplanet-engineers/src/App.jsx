@@ -209,6 +209,7 @@ function App() {
 
   return (
     <>
+      <div className="absolute bg-gray-50">STUCK</div>
       <button id="btnPlay">Play</button>
       <canvas id="myThreeJsCanvas"></canvas>
     </>
