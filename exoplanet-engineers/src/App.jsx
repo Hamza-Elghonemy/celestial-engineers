@@ -129,7 +129,7 @@ function createLatLongGrid() {
 }
 
 // Add latitude and longitude grid to the scene
-createLatLongGrid();
+// createLatLongGrid();
 
 // Orbit Controls for looking around
 const controls = new OrbitControls(camera, renderer.domElement);
@@ -160,23 +160,23 @@ const mouse = new THREE.Vector2();
 const raycaster = new THREE.Raycaster();
 let tooltipVisible = false; // Track tooltip visibility
 
-// Handle mouse move event to update mouse coordinates
-window.addEventListener('mousemove', (event) => {
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+// // Handle mouse move event to update mouse coordinates
+// window.addEventListener('mousemove', (event) => {
+//     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+//     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-    // Update tooltip position if it's visible
-    if (tooltipVisible) {
-        tooltip.style.left = `${event.clientX + 10}px`; // Adjust for correct positioning
-        tooltip.style.top = `${event.clientY + 10}px`; // Adjust for correct positioning
-    }
-});
+//     // Update tooltip position if it's visible
+//     if (tooltipVisible) {
+//         tooltip.style.left = `${event.clientX + 10}px`; // Adjust for correct positioning
+//         tooltip.style.top = `${event.clientY + 10}px`; // Adjust for correct positioning
+//     }
+// });
 
-// Hide tooltip when mouse leaves the window
-window.addEventListener('mouseout', () => {
-    tooltip.style.display = 'none';
-    tooltipVisible = false; // Hide the tooltip
-});
+// // Hide tooltip when mouse leaves the window
+// window.addEventListener('mouseout', () => {
+//     tooltip.style.display = 'none';
+//     tooltipVisible = false; // Hide the tooltip
+// });
 
 // Animation loop
 function animate() {
