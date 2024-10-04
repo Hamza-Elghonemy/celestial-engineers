@@ -12,7 +12,7 @@ function App() {
 
 const scene = new THREE.Scene();
 // Perspective parameters: POV, Aspect Ratio, View Frustum (near, far)
-const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
 const canvas=document.getElementById('myThreeJsCanvas');
 const renderer = new THREE.WebGLRenderer({canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -22,44 +22,192 @@ camera.position.set(0, 1.8, 0); // Position the camera at the surface of the pla
 
 // Add a basic ambient light
 const ambientLight = new THREE.AmbientLight(0xffffff);
-scene.add(ambientLight);
+scene.add(ambientLight); 
 
-// Mock Gaia star data with RA and DE (Right Ascension and Declination)
-function generateStarData(numStars) {
-    const stars = [];
-    for (let i = 0; i < numStars; i++) {
-        const ra = Math.random() * 24; // RA in hours, randomly between 0 and 24
-        const de = (Math.random() - 0.5) * 180; // DE in degrees, randomly between -90 and +90
-        const magnitude = Math.random() * 20 + 10.5; // Random magnitude between 10.5 and 15.5
-        const name = `Star ${i + 1}`;
+async function queryGaiaApi(ra, dec, radius) {
+    const url = "https://gea.esac.esa.int/tap-server/tap/sync";
+    
+    const query = `
+    SELECT TOP 50000
+        source_id, ra, dec, phot_g_mean_mag
+    FROM gaiadr3.gaia_source
+    WHERE 1=CONTAINS(
+        POINT('ICRS', ra, dec),
+        CIRCLE('ICRS', ${ra}, ${dec}, ${radius})
+    )
+    `;
+
+    const response = await fetch('/api/gaia', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            "REQUEST": "doQuery",
+            "LANG": "ADQL",
+            "FORMAT": "json",
+            "QUERY": query
+        })
+    });
+
+    if (response.ok) {
+        const data = await response.json();
         
-        // Convert RA (hours) to degrees and then to radians
-        const raRadians = THREE.MathUtils.degToRad(ra * 15); // Convert RA to degrees and then to radians
-        // Convert DE (degrees) to radians
-        const deRadians = THREE.MathUtils.degToRad(de);
-        
-        // Assume a unit sphere (r = 1) and convert RA/DE to 3D Cartesian coordinates
-        const r = 1; // Radius can be scaled if needed
-        const x = r * Math.cos(deRadians) * Math.cos(raRadians);
-        const y = r * Math.sin(deRadians);
-        const z = r * Math.cos(deRadians) * Math.sin(raRadians);
-        
-        // Push star data
-        stars.push({
-            x: x * 10, // Scale up for visualization
-            y: y * 10,
-            z: z * 10,
-            magnitude: magnitude,
-            name: name,
-            ra: ra, // Storing RA in hours
-            de: de // Storing DE in degrees
-        });
+        // Debugging output
+        //console.log("Response JSON:", data);
+        if (data.data && Array.isArray(data.data)) {
+            return data.data.map(item => ({
+                source_id: item[0],
+                ra: item[1],
+                dec: item[2],
+                phot_g_mean_mag: item[3]
+            }));
+        } else {
+            console.error("Error: Unexpected response format");
+            return null;
+        }
+    } else {
+        console.error("HTTP error:", response.status);
+        throw new Error("Failed to fetch data from GAIA API");
     }
-    return stars;
+}
+let gaiaResults= null;
+async function fetchGaiaData() {
+    try {
+        // Call the function with sample parameters
+        gaiaResults = await queryGaiaApi(180.0, 20.0, 0.8);
+        
+        // Now you can work with the results
+       
+    } catch (error) {
+        console.error('Error fetching data:', error);
+    }
+}
+var mockStarData=[];
+
+function useGaiaData() {
+    if (gaiaResults) {
+        console.log('Number of sources found:', gaiaResults.length);
+        //console.log(gaiaResults);
+        // Access individual items
+        let stars = [];
+        let decMax=0;
+        let decMin=Infinity;
+        let raMax=0;
+        let raMin=Infinity;
+        for(let j=0;j<gaiaResults.length;j++)
+        {
+            if(gaiaResults[j].dec>decMax)
+            {
+                decMax=gaiaResults[j].dec;
+            }
+            if(gaiaResults[j].dec<decMin)
+            {
+                decMin=gaiaResults[j].dec;
+            }
+            if(gaiaResults[j].ra>raMax)
+            {
+                raMax=gaiaResults[j].ra;
+            }
+            if(gaiaResults[j].ra<raMin)
+            {
+                raMin=gaiaResults[j].ra;
+            }
+        }
+        gaiaResults.forEach((source,i) => {
+            const ra = (source.ra-raMin)*360/(raMax-raMin); // RA in hours, randomly between 0 and 24
+           
+            const de = (source.dec-decMin)*360/(decMax-decMin); // DE in degrees, randomly between -90 and +90
+           
+            console.log(ra,de);
+
+            const magnitude =source.phot_g_mean_mag; // Random magnitude between 10.5 and 15.5
+            
+            const name = `Star ${i + 1}`;
+            
+            // Convert RA (hours) to degrees and then to radians
+            const SCALE_FACTOR = 100; // Adjust this based on your scene size
+
+            const raRadians = THREE.MathUtils.degToRad(ra);
+            const deRadians = THREE.MathUtils.degToRad(de);
+
+            // Convert to Cartesian coordinates
+            const x = Math.cos(deRadians) * Math.cos(raRadians);
+            const y = Math.sin(deRadians);
+            const z = Math.cos(deRadians) * Math.sin(raRadians);
+
+            // Push star data with scaled positions
+            stars.push({
+                x: x * SCALE_FACTOR,
+                y: y * SCALE_FACTOR,
+                z: z * SCALE_FACTOR,
+                magnitude: magnitude,
+                source_id: name,
+                ra: ra,
+                dec: de
+            });
+            
+            // Push star data
+            // stars.push({
+            //     x: x * 10, // Scale up for visualization
+            //     y: y * 10,
+            //     z: z * 10,
+            //     magnitude: magnitude,
+            //     name: name,
+            //     ra: ra, // Storing RA in hours
+            //     de: de // Storing DE in degrees
+            // });
+        
+        
+            //console.log(`RA: ${source.ra}, DEC: ${source.dec}`);
+        });
+        mockStarData=stars;
+        //console.log("mockStarData");
+        //console.log(mockStarData);
+    }
 }
 
+fetchGaiaData()
+.then(() => {useGaiaData()}) ;
+
+// Mock Gaia star data with RA and DE (Right Ascension and Declination)
+
+// function generateStarData(numStars) {
+//     const stars = [];
+//     for (let i = 0; i < numStars; i++) {
+//         const ra = Math.random() * 24; // RA in hours, randomly between 0 and 24
+//         const de = (Math.random() - 0.5) * 180; // DE in degrees, randomly between -90 and +90
+//         const magnitude = Math.random() * 20 + 10.5; // Random magnitude between 10.5 and 15.5
+//         const name = `Star ${i + 1}`;
+        
+//         // Convert RA (hours) to degrees and then to radians
+//         const raRadians = THREE.MathUtils.degToRad(ra * 15); // Convert RA to degrees and then to radians
+//         // Convert DE (degrees) to radians
+//         const deRadians = THREE.MathUtils.degToRad(de);
+        
+//         // Assume a unit sphere (r = 1) and convert RA/DE to 3D Cartesian coordinates
+//         const r = 1; // Radius can be scaled if needed
+//         const x = r * Math.cos(deRadians) * Math.cos(raRadians);
+//         const y = r * Math.sin(deRadians);
+//         const z = r * Math.cos(deRadians) * Math.sin(raRadians);
+        
+//         // Push star data
+//         stars.push({
+//             x: x * 10, // Scale up for visualization
+//             y: y * 10,
+//             z: z * 10,
+//             magnitude: magnitude,
+//             name: name,
+//             ra: ra, // Storing RA in hours
+//             de: de // Storing DE in degrees
+//         });
+//     }
+//     return stars;
+// }
+
 // Generate mock star data (100 stars)
-const mockStarData = generateStarData(100);
+//const mockStarData = generateStarData(100);
+//console.log(mockStarData);
 
 // Create geometry to hold star positions
 const starGeometry = new THREE.BufferGeometry();
@@ -87,10 +235,12 @@ const starMaterial = new THREE.ShaderMaterial({
 // Create arrays to hold star data
 const positions = [];
 const names = [];
-
+fetchGaiaData()
+.then(() => {useGaiaData()}).then(()=>{ 
 // Add each star's position and adjust its size based on magnitude
 mockStarData.forEach(star => {
     positions.push(star.x, star.y, star.z); // Position in 3D space
+    //console.log(star.x, star.y, star.z);
     names.push(star.name); // Store star names
 });
 
@@ -259,6 +409,7 @@ function animate() {
 }
 
 animate();
+  });
   }),[];
 
   return (
