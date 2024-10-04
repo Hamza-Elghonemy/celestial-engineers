@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import React, { useRef, useEffect } from 'react';
 import * as THREE from 'three';
 import { FirstPersonControls } from 'three/addons/controls/FirstPersonControls.js';
 import { FlyControls } from 'three/addons/controls/FlyControls.js';
@@ -7,6 +7,32 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 function App() {
 
+    const rendererRef = useRef();
+    const sceneRef = useRef();
+    const cameraRef = useRef();
+
+    const takeScreenshot = () => {
+        if (!rendererRef.current || !sceneRef.current || !cameraRef.current) return;
+        
+        // Render the scene
+        rendererRef.current.render(sceneRef.current, cameraRef.current);
+        
+        try {
+            // Get the canvas data
+            const dataURL = rendererRef.current.domElement.toDataURL('image/png');
+            
+            // Create temporary link and trigger download
+            const link = document.createElement('a');
+            link.href = dataURL;
+            link.download = 'star-map-screenshot.png';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error('Error taking screenshot:', error);
+        }
+    };
+
   useEffect(()=>{
 
 
@@ -14,7 +40,7 @@ const scene = new THREE.Scene();
 // Perspective parameters: POV, Aspect Ratio, View Frustum (near, far)
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 const canvas=document.getElementById('myThreeJsCanvas');
-const renderer = new THREE.WebGLRenderer({canvas, antialias: true });
+const renderer = new THREE.WebGLRenderer({canvas, antialias: true , preserveDrawingBuffer: true});
 renderer.setSize(window.innerWidth, window.innerHeight);
 
 // Set up camera position
@@ -263,6 +289,23 @@ animate();
 
   return (
     <>
+    <button 
+                onClick={takeScreenshot}
+                style={{
+                    position: 'absolute',
+                    top: '20px',
+                    left: '20px',
+                    zIndex: 1000,
+                    padding: '10px 20px',
+                    backgroundColor: '#4CAF50',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '5px',
+                    cursor: 'pointer'
+                }}
+            >
+                Take Screenshot
+            </button>
    <canvas id="myThreeJsCanvas"></canvas>
     </>
   )
