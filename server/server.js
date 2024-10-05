@@ -13,38 +13,57 @@ app.use(cors({
   origin: 'http://localhost:5173' // Your frontend URL
 }));
 
-app.post('/proxy/gaia', (req, res) => {
-  try {
-    console.log('Request:', req.body);
-      const { ra, dec, radius } = req.body;
-      const url = "https://gea.esac.esa.int/tap-server/tap/sync";
-      
-      const query = `
-      SELECT TOP 50000
-        source_id, ra, dec, phot_g_mean_mag
+app.use(express.json());
+
+async function queryGaiaApi(ra, dec, radius) {
+    // Define the GAIA 3 API endpoint
+    const url = "https://gea.esac.esa.int/tap-server/tap/sync";
+    // Define the query parameters
+    const query = `
+    SELECT TOP 1000
+        source_id, ra, dec, phot_g_mean_mag, designation
     FROM gaiadr3.gaia_source
     WHERE 1=CONTAINS(
         POINT('ICRS', ra, dec),
         CIRCLE('ICRS', ${ra}, ${dec}, ${radius})
     )
-      `;
-
-      axios.post(url, 
-        new URLSearchParams({
-            "REQUEST": "doQuery",
-            "LANG": "ADQL",
-            "FORMAT": "json",
-            "QUERY": query
-        }).toString(),
-        {
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+    `;
+    
+    // Make the API request
+    try {
+        const response = await axios.post(url, 
+            new URLSearchParams({
+                "REQUEST": "doQuery",
+                "LANG": "ADQL",
+                "FORMAT": "json",
+                "QUERY": query
+            }).toString(),
+            {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
             }
-        }
-    ).then(response => {response.json();}).then(data => {
-      res.json(data)});
+        );
+
+        return response.data; // Return the response data
+    } catch (error) {
+        console.error('Error querying GAIA API:', error);
+        throw error; // Re-throw the error for further handling
+    }
+}
+
+
+app.post('/proxy/gaia', async (req, res) => {
+  try {
+    const ra = req.body.ra;
+    const dec = req.body.dec;
+      const radius  = req.body.radius;
+      const response = await queryGaiaApi(ra, dec, radius);
+      console.log(response);
+      res.json(response);
+      
   } catch (error) {
-      console.error('Error:', error);
+      //console.error('Error:', error);
       res.status(500).json({ error: 'Failed to fetch data' });
   }
 });
