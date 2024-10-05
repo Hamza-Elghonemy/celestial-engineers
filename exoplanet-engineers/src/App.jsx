@@ -14,9 +14,37 @@ function App() {
       1000
     );
     const canvas = document.getElementById("myThreeJsCanvas");
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true }); // Added preserveDrawingBuffer for screenshots
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      preserveDrawingBuffer: true,
+    }); // Added preserveDrawingBuffer for screenshots
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.position.set(0, 1.8, 0);
+
+    function toggleHighlight(constellation) {
+      const isHighlighted = constellation.lines[0].material.color.equals(
+        new THREE.Color(0xff0000)
+      );
+      constellation.lines.forEach((line) => {
+        line.material.color.set(isHighlighted ? 0xffffff : 0xff0000); // Toggle between white and red
+      });
+    }
+
+    function addConstellationButton(constellation) {
+      const button = document.createElement("button");
+      button.className =
+        "text-white bg-blue-700 active:bg-red-100 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:focus:ring-blue-800";
+      button.textContent = constellation.name;
+      button.onclick = () => {
+        toggleHighlight(constellation);
+        button.disabled = true; // Disable the button
+        setTimeout(() => {
+          button.disabled = false; // Re-enable the button after 1 second
+        }, 1000);
+      };
+      document.getElementById("constellationButtons").appendChild(button);
+    }
 
     const ambientLight = new THREE.AmbientLight(0xffffff);
     scene.add(ambientLight);
@@ -64,7 +92,7 @@ function App() {
     async function queryGaiaApi(ra, dec, radius) {
       const query = `
     SELECT TOP 50000
-        source_id, ra, dec, phot_g_mean_mag
+        source_id, ra, dec, phot_g_mean_mag, designation
     FROM gaiadr3.gaia_source
     WHERE 1=CONTAINS(
         POINT('ICRS', ra, dec),
@@ -72,6 +100,14 @@ function App() {
     )
     `;
 
+      function toggleHighlight(constellation) {
+        const isHighlighted = constellation.lines[0].material.color.equals(
+          new THREE.Color(0xff0000)
+        );
+        constellation.lines.forEach((line) => {
+          line.material.color.set(isHighlighted ? 0xffffff : 0xff0000); // Toggle between white and red
+        });
+      }
       const response = await fetch("/api/gaia", {
         method: "POST",
         headers: {
@@ -121,7 +157,6 @@ function App() {
 
     function useGaiaData() {
       if (gaiaResults) {
-        console.log("Number of sources found:", gaiaResults.length);
         // Access individual items
         let stars = [];
         let decMax = 0;
@@ -157,18 +192,16 @@ function App() {
           const SCALE_FACTOR = 100; // Adjust this based on your scene size
 
           if (magnitude >= maxMagnitude) {
-            console.log("New Max magnitude:", magnitude);
             maxMagnitude = magnitude;
           }
           if (magnitude < minMagnitude && magnitude > 0) {
-            console.log("New Min Magnitude:", magnitude);
             minMagnitude = magnitude;
           }
 
           // Function to normalize magnitudes to a scale of 0.05 to 0.15
           const normalizeMagnitude = (magnitude) => {
-            const minScale = 0.05;
-            const maxScale = 0.15;
+            const minScale = 0.03;
+            const maxScale = 0.12;
             return (
               ((magnitude - minMagnitude) / (maxMagnitude - minMagnitude)) *
                 (maxScale - minScale) +
@@ -185,7 +218,6 @@ function App() {
           const z = Math.cos(deRadians) * Math.sin(raRadians);
 
           const normalizedMagnitude = normalizeMagnitude(magnitude);
-
           // Push star data with scaled positions
           stars.push({
             x: x * SCALE_FACTOR,
@@ -198,15 +230,15 @@ function App() {
           });
         });
         mockStarData = stars;
-        console.log("Max magnitude:", maxMagnitude);
-        console.log("Min magnitude:", minMagnitude);
       }
     }
     fetchGaiaData().then(() => {
       useGaiaData();
+      const names = [];
+      const positions = [];
       mockStarData.forEach((star) => {
         // Create and position the visible star
-        starGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+        starGeometry = new THREE.SphereGeometry(star.magnitude || 0.03, 16, 16);
         const starMesh = new THREE.Mesh(starGeometry, starMaterial);
         starMesh.position.set(star.x, star.y, star.z);
         scene.add(starMesh); // Add visible star to the scene
@@ -217,11 +249,16 @@ function App() {
           detectionMaterial
         );
         detectionMesh.position.set(star.x, star.y, star.z); // Same position as the star
-        detectionMesh.name = star.name; // Attach star data to detection mesh
+        detectionMesh.name = star.source_id; // Attach star data to detection mesh
         detectionMesh.ra = star.ra;
-        detectionMesh.de = star.de;
+        detectionMesh.de = star.dec;
+        starMesh.name = star.source_id;
+        starMesh.ra = star.ra;
+        starMesh.de = star.dec;
         stars.push(detectionMesh); // Add detection sphere to raycastable objects array
         scene.add(detectionMesh); // Add detection sphere to the scene
+        names.push(star.source_id); // Store star names
+        positions.push((star.ra, star.dec)); // Store star positions
       });
     });
 
@@ -334,15 +371,15 @@ function App() {
     function takeScreenshot() {
       // Render the scene
       renderer.render(scene, camera);
-      
+
       // Convert the canvas to a data URL
-      const dataURL = canvas.toDataURL('image/png');
-      
+      const dataURL = canvas.toDataURL("image/png");
+
       // Create a temporary link element
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = dataURL;
-      link.download = 'starmap-screenshot.png';
-      
+      link.download = "starmap-screenshot.png";
+
       // Trigger the download
       document.body.appendChild(link);
       link.click();
@@ -400,28 +437,42 @@ function App() {
         lastStar = selectedStar;
       }
     });
-
+    let lastSelectedStar = null;
     function drawLine(star1, star2) {
       const material = new THREE.LineBasicMaterial({ color: 0xffffff });
       const points = [star1.position, star2.position];
+      star2.Color = 0xffff00;
       const geometry = new THREE.BufferGeometry().setFromPoints(points);
       const line = new THREE.Line(geometry, material);
       scene.add(line);
       lines.push(line);
+
+      // Change the color of the last selected star to yellow
+      if (lastSelectedStar) {
+        lastSelectedStar.material.color.set(0xffffff); // Reset previous star color to white
+      }
+      star2.material.color.set(0xffff00); // Set current star color to yellow
+      lastSelectedStar = star2; // Update last selected star
     }
 
     const constellations = [];
-
+    let isPromptCooldown = false;
     function promptForConstellationName() {
+      if (isPromptCooldown) return;
+      isPromptCooldown = true; // S
       // Simple prompt for entering the constellation name
       const name = prompt("Name your constellation:");
       if (name) {
         constellations.push({ name, lines: [...lines] });
+        addConstellationButton(constellations[constellations.length - 1]);
         lines = []; // Reset current lines
       } else {
         scene.remove(...lines);
         lines = [];
       }
+      setTimeout(() => {
+        isPromptCooldown = false;
+      }, 1000);
     }
 
     window.addEventListener("contextmenu", (event) => {
@@ -429,6 +480,7 @@ function App() {
       if (lastStar && lines.length > 0) {
         lastStar = null;
         promptForConstellationName();
+        return;
       }
     });
 
@@ -445,47 +497,28 @@ function App() {
       mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
       raycaster.setFromCamera(mouse, camera);
+      const intersects = raycaster.intersectObjects(stars);
 
-      // Check for intersections with lines
-      const lineIntersects = raycaster.intersectObjects(lines);
-      if (lineIntersects.length > 0) {
-        const intersectedLine = lineIntersects[0].object;
-        const constellation = constellations.find((c) =>
-          c.lines.includes(intersectedLine)
-        );
-
-        if (constellation) {
-          // Update tooltip content and position
-          tooltip.innerHTML = `Constellation: ${constellation.name}`;
-          tooltip.style.display = "block";
-          tooltip.style.left = `${event.clientX + 10}px`;
-          tooltip.style.top = `${event.clientY + 10}px`;
-
-          // Highlight the constellation lines
-          highlightConstellation(constellation, true);
-        }
+      if (intersects.length > 0) {
+        const intersectedStar = intersects[0].object;
+        // Update tooltip content and position
+        tooltip.innerHTML = `
+          Name: ${intersectedStar.name}<br>
+          RA: ${intersectedStar.ra.toFixed(2)} hours<br>
+          DE: ${intersectedStar.de.toFixed(2)} degrees
+        `;
+        tooltip.style.display = "block";
+        tooltip.style.left = `${event.clientX + 10}px`;
+        tooltip.style.top = `${event.clientY + 10}px`;
       } else {
-        // Reset all constellations' lines to their original color
-        constellations.forEach((c) => highlightConstellation(c, false));
-
-        // Check for intersections with stars
-        const starIntersects = raycaster.intersectObjects(stars);
-        if (starIntersects.length > 0) {
-          const intersectedStar = starIntersects[0].object;
-
-          // Update tooltip content and position
-          tooltip.innerHTML = `
-        Name: ${intersectedStar.name}<br>
-        RA: ${intersectedStar.ra.toFixed(2)} hours<br>
-        DE: ${intersectedStar.de.toFixed(2)} degrees
-      `;
-          tooltip.style.display = "block";
-          tooltip.style.left = `${event.clientX + 10}px`;
-          tooltip.style.top = `${event.clientY + 10}px`;
-        } else {
-          tooltip.style.display = "none";
-        }
+        tooltip.style.display = "none";
       }
+    });
+
+    // Hide tooltip when mouse leaves the window
+    window.addEventListener("mouseout", () => {
+      tooltip.style.display = "none";
+      constellations.forEach((c) => highlightConstellation(c, false));
     });
 
     // Hide tooltip when mouse leaves the window
@@ -542,6 +575,7 @@ function App() {
         >
           Save PNG
         </button>
+        <div id="constellationButtons" className="flex space-x-1"></div>
       </div>
 
       <canvas id="myThreeJsCanvas"></canvas>
