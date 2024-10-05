@@ -3,9 +3,11 @@ import { useEffect } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
-function App() {
+
+function App({ planet }) {
   useEffect(() => {
     let lines = [];
+    console.log(planet);
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
       75,
@@ -14,7 +16,11 @@ function App() {
       1000
     );
     const canvas = document.getElementById("myThreeJsCanvas");
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true }); // Added preserveDrawingBuffer for screenshots
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      preserveDrawingBuffer: true,
+    }); // Added preserveDrawingBuffer for screenshots
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.position.set(0, 1.8, 0);
 
@@ -62,7 +68,14 @@ function App() {
     // Add each star's position and create a mesh for each star with a detection area
     const stars = [];
     async function queryGaiaApi(raa, deca, radiusa) {
-      console.log("Querying GAIA API with ra:", raa, "dec:", deca, "radius:", radiusa);
+      console.log(
+        "Querying GAIA API with ra:",
+        raa,
+        "dec:",
+        deca,
+        "radius:",
+        radiusa
+      );
       const response = await fetch("http://localhost:3000/proxy/gaia", {
         method: "POST",
         headers: {
@@ -71,8 +84,8 @@ function App() {
         body: JSON.stringify({
           ra: raa,
           dec: deca,
-          radius: radiusa
-      }),
+          radius: radiusa,
+        }),
       });
 
       if (response.ok) {
@@ -100,7 +113,11 @@ function App() {
     async function fetchGaiaData() {
       try {
         // Call the function with sample parameters
-        gaiaResults = await queryGaiaApi(180.0, 20.0, 0.8);
+        gaiaResults = await queryGaiaApi(
+          planet.Right_Ascension,
+          planet.Declination,
+          0.8
+        );
 
         // Now you can work with the results
       } catch (error) {
@@ -324,15 +341,15 @@ function App() {
     function takeScreenshot() {
       // Render the scene
       renderer.render(scene, camera);
-      
+
       // Convert the canvas to a data URL
-      const dataURL = canvas.toDataURL('image/png');
-      
+      const dataURL = canvas.toDataURL("image/png");
+
       // Create a temporary link element
-      const link = document.createElement('a');
+      const link = document.createElement("a");
       link.href = dataURL;
-      link.download = 'starmap-screenshot.png';
-      
+      link.download = "starmap-screenshot.png";
+
       // Trigger the download
       document.body.appendChild(link);
       link.click();
