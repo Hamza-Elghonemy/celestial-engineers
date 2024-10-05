@@ -50,11 +50,11 @@ function App() {
     circleTexture.wrapT = THREE.RepeatWrapping;
 
     // Create geometry for a small visible star
-    const starGeometry = new THREE.SphereGeometry(0.08, 16, 16); // Small visible star size
+    const starGeometry = new THREE.SphereGeometry(0.1, 16, 16); // Small visible star size
     const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
     // Create geometry for a larger invisible detection sphere
-    const detectionGeometry = new THREE.SphereGeometry(0.1, 16, 16); // Larger detection area
+    const detectionGeometry = new THREE.SphereGeometry(0.5, 16, 16); // Larger detection area
     const detectionMaterial = new THREE.MeshBasicMaterial({ visible: false }); // Invisible detection area
 
     // Add each star's position and create a mesh for each star with a detection area
@@ -87,7 +87,7 @@ function App() {
         const data = await response.json();
 
         // Debugging output
-        //console.log("Response JSON:", data);
+
         if (data.data && Array.isArray(data.data)) {
           return data.data.map((item) => ({
             source_id: item[0],
@@ -120,7 +120,6 @@ function App() {
     function useGaiaData() {
       if (gaiaResults) {
         console.log("Number of sources found:", gaiaResults.length);
-        //console.log(gaiaResults);
         // Access individual items
         let stars = [];
         let decMax = 0;
@@ -171,23 +170,8 @@ function App() {
             ra: ra,
             dec: de,
           });
-
-          // Push star data
-          // stars.push({
-          //     x: x * 10, // Scale up for visualization
-          //     y: y * 10,
-          //     z: z * 10,
-          //     magnitude: magnitude,
-          //     name: name,
-          //     ra: ra, // Storing RA in hours
-          //     de: de // Storing DE in degrees
-          // });
-
-          //console.log(`RA: ${source.ra}, DEC: ${source.dec}`);
         });
         mockStarData = stars;
-        //console.log("mockStarData");
-        //console.log(mockStarData);
       }
     }
     fetchGaiaData().then(() => {
@@ -388,9 +372,7 @@ function App() {
       if (name) {
         constellations.push({ name, lines: [...lines] });
         lines = []; // Reset current lines
-        console.log(constellations);
       } else {
-        console.log("no");
         scene.remove(...lines);
         lines = [];
       }
