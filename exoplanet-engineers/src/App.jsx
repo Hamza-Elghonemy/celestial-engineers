@@ -14,7 +14,7 @@ function App() {
       1000
     );
     const canvas = document.getElementById("myThreeJsCanvas");
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true }); // Added preserveDrawingBuffer for screenshots
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.position.set(0, 1.8, 0);
 
@@ -331,7 +331,25 @@ function App() {
       reader.readAsText(file);
     }
 
+    function takeScreenshot() {
+      // Render the scene
+      renderer.render(scene, camera);
+      
+      // Convert the canvas to a data URL
+      const dataURL = canvas.toDataURL('image/png');
+      
+      // Create a temporary link element
+      const link = document.createElement('a');
+      link.href = dataURL;
+      link.download = 'starmap-screenshot.png';
+      
+      // Trigger the download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
     // Add event listeners for save and load buttons
+    document.getElementById("btnScreenshot").onclick = takeScreenshot;
     document.getElementById("btnSave").onclick = saveData;
 
     document.getElementById("btnLoad").onclick = () => {
@@ -498,14 +516,7 @@ function App() {
           className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
           type="button"
         >
-          Save
-          <path
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="m1 1 4 4 4-4"
-          />
+          Save JSON
         </button>
         <button
           id="btnLoad"
@@ -514,13 +525,6 @@ function App() {
           type="button"
         >
           Load
-          <path
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="m1 1 4 4 4-4"
-          />
         </button>
         <button
           id="btnPlay"
@@ -528,14 +532,15 @@ function App() {
           className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
           type="button"
         >
-          Play{" "}
-          <path
-            stroke="currentColor"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth="2"
-            d="m1 1 4 4 4-4"
-          />
+          Play
+        </button>
+        <button
+          id="btnScreenshot"
+          data-dropdown-toggle="dropdown"
+          className="text-white ml-2 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          type="button"
+        >
+          Save PNG
         </button>
       </div>
 
