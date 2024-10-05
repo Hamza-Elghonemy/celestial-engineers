@@ -8,7 +8,7 @@ body {
     z-index: -1;
 }
 
-#app {
+#root {
     /* background: linear-gradient(139.42deg, #1d2948, #131c33); */
     background-image: url('src/assets/images/background.jpg');
     display: flex;
@@ -52,7 +52,8 @@ body {
   .offcanvas-body {
     max-height: 85vh; /* Adjust the height as needed */
     overflow-y: auto; /* Optional: Add scroll bar */
-  }@tailwind base;
+  }
+  @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
