@@ -194,9 +194,6 @@ export default function Main(props) {
           <span className="about navbar" style={{ cursor: "pointer" }}>
             Home
           </span>
-          <span className="contact navbar" style={{ cursor: "pointer" }}>
-            Tutorial
-          </span>
         </div>
         <div className="space">
           <div className="flex-row-b">
