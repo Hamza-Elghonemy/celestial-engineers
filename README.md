@@ -1,43 +1,48 @@
+# Celestial Engineers - Exoplanet Visualization
 
-# Celestial Engineers
+This project visualizes exoplanets and stars using Three.js. It includes functionalities to interact with the stars and take screenshots of the scene.
 
-Welcome to the Celestial Engineers repository!
+## Features
 
-## Description
+- 3D visualization of exoplanets and stars
+- Interactive tooltips displaying star information
+- Screenshot functionality to capture and download the scene as a PNG
 
-Celestial Engineers is a project focused on creating innovative solutions using JavaScript. This repository primarily contains JavaScript code, with minor components in HTML and CSS.
+## Setup Instructions
 
-## Repository Details
+### Prerequisites
 
-- **Repository Owner**: [AmrDoma](https://github.com/AmrDoma)
-- **Default Branch**: main
-- **Visibility**: Public
-- **URL**: [Celestial Engineers](https://github.com/AmrDoma/celestial-engineers)
-- **Created At**: 2024-10-04
-- **Last Updated**: 2024-10-05
+- Node.js (v14 or higher)
+- npm (v6 or higher)
 
-## Getting Started
+### Installation
 
-To get started with this project, clone the repository and install the necessary dependencies.
+1. Clone the repository:
+    ```bash
+    git clone https://github.com/your-username/celestial-engineers.git
+    cd celestial-engineers
+    ```
+2. Install the dependencies:
+    ```bash
+    npm install
+    ```
 
-```bash
-git clone https://github.com/AmrDoma/celestial-engineers.git
-cd celestial-engineers
-# Install dependencies
-```
+### Running the Project
 
-## Usage
+1. Start the development server:
+    ```bash
+    npm start
+    ```
 
-Provide detailed usage instructions and examples here.
+2. Open your browser and navigate to `http://localhost:3000` to view the application.
 
-## Contributing
+### Screenshot Functionality
 
-Contributions are welcome! Please fork this repository, make your changes, and submit a pull request.
+- Click the "Take Screenshot" button to capture the current scene and download it as a PNG file.
 
-## License
+## Project Structure
 
-This project is not currently under any specific license.
-
----
-
-Feel free to further customize this README as needed. If you need more specific information or have additional customization requests, let me know!
+- `src/`: Contains the source code for the project.
+  - `App.jsx`: Main application file.
+  - `index.js`: Entry point for the React application.
+- `public/`: Contains the public assets and the HTML template.
