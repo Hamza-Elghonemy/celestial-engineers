@@ -2,8 +2,6 @@ import { useEffect } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { PointerLockControls } from "three/addons/controls/PointerLockControls.js";
-import { CSS2DRenderer } from "three/examples/jsm/renderers/CSS2DRenderer.js";
-
 function App() {
   useEffect(() => {
     let lines = [];
