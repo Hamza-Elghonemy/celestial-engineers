@@ -1,0 +1,55 @@
+body {
+    background-color: #f0f0f0;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    width: 100%;
+    z-index: -1;
+}
+
+#app {
+    /* background: linear-gradient(139.42deg, #1d2948, #131c33); */
+    background-image: url('src/assets/images/background.jpg');
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.offcanvas {
+    position: fixed;
+    padding: 30px 10px;
+    top: 0;
+    left: 0;
+    width: 300px; /* Adjust as needed */
+    height: 100%;
+    background-color: #242c44; /* Adjust as needed */
+    z-index: 1000; /* Adjust this value to resolve conflicts */
+    box-shadow: 2px 0 5px rgba(0,0,0,0.5); /* Optional: Add shadow for better visibility */
+    color: white;
+}
+.offcanvas .planet-box {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  
+.offcanvas .planet-box  {
+    width: 50px;
+    height: 50px;
+    margin-right: 10px;
+    border-radius: 50%;
+  }
+  
+  .offcanvas .planet-box span {
+    font-size: 16px;
+    font-weight: 500;
+  }
+
+  .offcanvas-body {
+    max-height: 85vh; /* Adjust the height as needed */
+    overflow-y: auto; /* Optional: Add scroll bar */
+  }
