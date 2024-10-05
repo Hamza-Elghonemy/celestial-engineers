@@ -204,7 +204,7 @@ export default function Main() {
             </div>
           </div>
         </div>
-        <img src={CImage} className='CenterImage rotate rotate2' onClick={navigate('/app')} style = {{cursor: "pointer"}} rotate = {rotate}/>
+        <img src={CImage} className='CenterImage rotate rotate2' onClick={() => {navigate('/app')}} style = {{cursor: "pointer"}} rotate = {rotate}/>
       </div >
       <span className='Planet-Name'>{planets[planetIndex] === undefined ? "temp": planets[planetIndex].Planet_Name}</span>
       <div className='Left'>

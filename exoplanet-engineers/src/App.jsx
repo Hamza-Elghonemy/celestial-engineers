@@ -61,28 +61,18 @@ function App() {
 
     // Add each star's position and create a mesh for each star with a detection area
     const stars = [];
-    async function queryGaiaApi(ra, dec, radius) {
-      const query = `
-    SELECT TOP 50000
-        source_id, ra, dec, phot_g_mean_mag
-    FROM gaiadr3.gaia_source
-    WHERE 1=CONTAINS(
-        POINT('ICRS', ra, dec),
-        CIRCLE('ICRS', ${ra}, ${dec}, ${radius})
-    )
-    `;
-
-      const response = await fetch("/api/gaia", {
+    async function queryGaiaApi(raa, deca, radiusa) {
+      console.log("Querying GAIA API with ra:", raa, "dec:", deca, "radius:", radiusa);
+      const response = await fetch("http://localhost:3000/proxy/gaia", {
         method: "POST",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Type": "application/json",
         },
-        body: new URLSearchParams({
-          REQUEST: "doQuery",
-          LANG: "ADQL",
-          FORMAT: "json",
-          QUERY: query,
-        }),
+        body: JSON.stringify({
+          ra: raa,
+          dec: deca,
+          radius: radiusa
+      }),
       });
 
       if (response.ok) {
