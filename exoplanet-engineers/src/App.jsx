@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 import { useEffect } from "react";
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
@@ -48,10 +49,8 @@ function App() {
     circleTexture.wrapS = THREE.RepeatWrapping;
     circleTexture.wrapT = THREE.RepeatWrapping;
 
-    const mockStarData = generateStarData(100);
-
     // Create geometry for a small visible star
-    const starGeometry = new THREE.SphereGeometry(0.015, 16, 16); // Small visible star size
+    const starGeometry = new THREE.SphereGeometry(0.08, 16, 16); // Small visible star size
     const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
     // Create geometry for a larger invisible detection sphere
@@ -60,24 +59,161 @@ function App() {
 
     // Add each star's position and create a mesh for each star with a detection area
     const stars = [];
-    mockStarData.forEach((star) => {
-      // Create and position the visible star
-      const starMesh = new THREE.Mesh(starGeometry, starMaterial);
-      starMesh.position.set(star.x, star.y, star.z);
-      scene.add(starMesh); // Add visible star to the scene
+    async function queryGaiaApi(ra, dec, radius) {
+      const query = `
+    SELECT TOP 50000
+        source_id, ra, dec, phot_g_mean_mag
+    FROM gaiadr3.gaia_source
+    WHERE 1=CONTAINS(
+        POINT('ICRS', ra, dec),
+        CIRCLE('ICRS', ${ra}, ${dec}, ${radius})
+    )
+    `;
 
-      // Create and position the invisible detection sphere around the star
-      const detectionMesh = new THREE.Mesh(
-        detectionGeometry,
-        detectionMaterial
-      );
-      detectionMesh.position.set(star.x, star.y, star.z); // Same position as the star
-      detectionMesh.name = star.name; // Attach star data to detection mesh
-      detectionMesh.ra = star.ra;
-      detectionMesh.de = star.de;
-      stars.push(detectionMesh); // Add detection sphere to raycastable objects array
-      scene.add(detectionMesh); // Add detection sphere to the scene
+      const response = await fetch("/api/gaia", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          REQUEST: "doQuery",
+          LANG: "ADQL",
+          FORMAT: "json",
+          QUERY: query,
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Debugging output
+        //console.log("Response JSON:", data);
+        if (data.data && Array.isArray(data.data)) {
+          return data.data.map((item) => ({
+            source_id: item[0],
+            ra: item[1],
+            dec: item[2],
+            phot_g_mean_mag: item[3],
+          }));
+        } else {
+          console.error("Error: Unexpected response format");
+          return null;
+        }
+      } else {
+        console.error("HTTP error:", response.status);
+        throw new Error("Failed to fetch data from GAIA API");
+      }
+    }
+    let gaiaResults = null;
+    async function fetchGaiaData() {
+      try {
+        // Call the function with sample parameters
+        gaiaResults = await queryGaiaApi(180.0, 20.0, 0.8);
+
+        // Now you can work with the results
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    }
+    var mockStarData = [];
+
+    function useGaiaData() {
+      if (gaiaResults) {
+        console.log("Number of sources found:", gaiaResults.length);
+        //console.log(gaiaResults);
+        // Access individual items
+        let stars = [];
+        let decMax = 0;
+        let decMin = Infinity;
+        let raMax = 0;
+        let raMin = Infinity;
+        for (let j = 0; j < gaiaResults.length; j++) {
+          if (gaiaResults[j].dec > decMax) {
+            decMax = gaiaResults[j].dec;
+          }
+          if (gaiaResults[j].dec < decMin) {
+            decMin = gaiaResults[j].dec;
+          }
+          if (gaiaResults[j].ra > raMax) {
+            raMax = gaiaResults[j].ra;
+          }
+          if (gaiaResults[j].ra < raMin) {
+            raMin = gaiaResults[j].ra;
+          }
+        }
+        gaiaResults.forEach((source, i) => {
+          const ra = ((source.ra - raMin) * 360) / (raMax - raMin); // RA in hours, randomly between 0 and 24
+
+          const de = ((source.dec - decMin) * 360) / (decMax - decMin); // DE in degrees, randomly between -90 and +90
+
+          const magnitude = source.phot_g_mean_mag; // Random magnitude between 10.5 and 15.5
+
+          const name = `Star ${i + 1}`;
+
+          // Convert RA (hours) to degrees and then to radians
+          const SCALE_FACTOR = 100; // Adjust this based on your scene size
+
+          const raRadians = THREE.MathUtils.degToRad(ra);
+          const deRadians = THREE.MathUtils.degToRad(de);
+
+          // Convert to Cartesian coordinates
+          const x = Math.cos(deRadians) * Math.cos(raRadians);
+          const y = Math.sin(deRadians);
+          const z = Math.cos(deRadians) * Math.sin(raRadians);
+
+          // Push star data with scaled positions
+          stars.push({
+            x: x * SCALE_FACTOR,
+            y: y * SCALE_FACTOR,
+            z: z * SCALE_FACTOR,
+            magnitude: magnitude,
+            source_id: name,
+            ra: ra,
+            dec: de,
+          });
+
+          // Push star data
+          // stars.push({
+          //     x: x * 10, // Scale up for visualization
+          //     y: y * 10,
+          //     z: z * 10,
+          //     magnitude: magnitude,
+          //     name: name,
+          //     ra: ra, // Storing RA in hours
+          //     de: de // Storing DE in degrees
+          // });
+
+          //console.log(`RA: ${source.ra}, DEC: ${source.dec}`);
+        });
+        mockStarData = stars;
+        //console.log("mockStarData");
+        //console.log(mockStarData);
+      }
+    }
+    fetchGaiaData().then(() => {
+      useGaiaData();
+      mockStarData.forEach((star) => {
+        // Create and position the visible star
+        const starMesh = new THREE.Mesh(starGeometry, starMaterial);
+        starMesh.position.set(star.x, star.y, star.z);
+        scene.add(starMesh); // Add visible star to the scene
+
+        // Create and position the invisible detection sphere around the star
+        const detectionMesh = new THREE.Mesh(
+          detectionGeometry,
+          detectionMaterial
+        );
+        detectionMesh.position.set(star.x, star.y, star.z); // Same position as the star
+        detectionMesh.name = star.name; // Attach star data to detection mesh
+        detectionMesh.ra = star.ra;
+        detectionMesh.de = star.de;
+        console.log(starMesh);
+        stars.push(detectionMesh); // Add detection sphere to raycastable objects array
+        scene.add(detectionMesh); // Add detection sphere to the scene
+      });
     });
+
+    //
     const circleGeometry = new THREE.CircleGeometry(100, 32);
     const circleMaterial = new THREE.MeshBasicMaterial({
       map: circleTexture,
@@ -355,9 +491,9 @@ function App() {
           Save
           <path
             stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
             d="m1 1 4 4 4-4"
           />
         </button>
@@ -370,9 +506,9 @@ function App() {
           Load
           <path
             stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
             d="m1 1 4 4 4-4"
           />
         </button>
@@ -385,9 +521,9 @@ function App() {
           Play{" "}
           <path
             stroke="currentColor"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
             d="m1 1 4 4 4-4"
           />
         </button>
@@ -399,31 +535,3 @@ function App() {
 }
 
 export default App;
-
-function generateStarData(numStars) {
-  const stars = [];
-  for (let i = 0; i < numStars; i++) {
-    const ra = Math.random() * 24;
-    const de = (Math.random() - 0.5) * 180;
-    const magnitude = Math.random() * 20 + 10.5;
-    const name = `Star ${i + 1}`;
-    const raRadians = THREE.MathUtils.degToRad(ra * 15);
-    const deRadians = THREE.MathUtils.degToRad(de);
-
-    const r = 1;
-    const x = r * Math.cos(deRadians) * Math.cos(raRadians);
-    const y = r * Math.sin(deRadians);
-    const z = r * Math.cos(deRadians) * Math.sin(raRadians);
-
-    stars.push({
-      x: x * 10,
-      y: y * 10,
-      z: z * 10,
-      magnitude: magnitude,
-      name: name,
-      ra: ra,
-      de: de,
-    });
-  }
-  return stars;
-}
