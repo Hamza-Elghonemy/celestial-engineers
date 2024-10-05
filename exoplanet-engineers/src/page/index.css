@@ -25,6 +25,7 @@ button {
 
 
 .main-container {
+  background-image: url('src/assets/images/background.jpg');
   position: relative;
   width: 1550px;
   height: 810px;
