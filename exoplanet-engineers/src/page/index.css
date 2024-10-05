@@ -1,0 +1,367 @@
+:root {
+  --default-font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    Ubuntu, "Helvetica Neue", Helvetica, Arial, "PingFang SC",
+    "Hiragino Sans GB", "Microsoft Yahei UI", "Microsoft Yahei",
+    "Source Han Sans CN", sans-serif;
+}
+
+
+.main-container {
+  overflow: hidden;
+  
+}
+
+.main-container,
+.main-container * {
+  box-sizing: border-box;
+}
+
+input,
+select,
+textarea,
+button {
+  outline: 0;
+}
+
+
+.main-container {
+  position: relative;
+  width: 1550px;
+  height: 810px;
+  margin: 0 auto;
+  overflow: hidden;
+}
+
+.frame {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+  position: absolute;
+  width: 218.529px;
+  height: 10.125px;
+  top: 5rem;
+  left: 5%;
+  z-index: 86;
+}
+
+.home {
+  flex-shrink: 0;
+  flex-basis: auto;
+  position: relative;
+  height: 10.125px;
+  color: #ffffff;
+  font-family: Satoshi, var(--default-font-family);
+  font-weight: 400;
+  line-height: 10.125px;
+  text-align: left;
+  white-space: nowrap;
+  opacity: 0.75;
+  z-index: 87;
+}
+
+.about {
+  flex-shrink: 0;
+  flex-basis: auto;
+  position: relative;
+  height: 10.125px;
+  color: #ffffff;
+  font-family: Satoshi, var(--default-font-family);
+  font-weight: 400;
+  line-height: 10.125px;
+  text-align: left;
+  white-space: nowrap;
+  opacity: 0.75;
+  z-index: 88;
+}
+
+#inputSearch {
+  position: relative;
+  width: 200px;
+  height: 30px;
+  top: 6px;
+  left: 50%;
+  transform: translate(-50%, 0);
+  background: #37516b;
+  border: none;
+  border-radius: 5px;
+  color: white;
+  font-size: 15px;
+  padding: 5px;
+  z-index: 100;
+}
+
+.contact {
+  flex-shrink: 0;
+  flex-basis: auto;
+  position: relative;
+  height: 10.125px;
+  color: #ffffff;
+  font-family: Satoshi, var(--default-font-family);
+  font-weight: 400;
+  line-height: 10.125px;
+  text-align: left;
+  white-space: nowrap;
+  opacity: 0.75;
+  z-index: 89;
+}
+
+.navbar{
+  font-size: 15px;
+  font-family: "Nova Square", sans-serif;
+  font-weight: 1000;
+  left: 20%;
+}
+
+.space {
+  position: absolute;
+  width: 834.976px;
+  height: 835.415px;
+  top: 31.306px;
+  left: 50%;
+  background-size: cover;
+  transform: translate(-50.02%, 0);
+}
+
+.CenterImage {
+  position: absolute;
+  width: 834.976px;
+  height: 835.415px;
+  top: 31.306px;
+  left: 0%;
+  background-size: cover;
+}
+
+.flex-row-b {
+  position: relative;
+  width: 442.879px;
+  height: 47.744px;
+  margin: 83.302px 0 0 196.049px;
+  top : 30px;
+  z-index: 80;
+}
+
+.frame-34 {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  gap: 30.564px;
+  position: absolute;
+  width: 800px;
+  height: 26.533px;
+  top: 1.533px;
+  left: 90%;
+  transform: translate(-50%, 0);
+  z-index: 4;
+}
+.Info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  z-index: 5;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: "Nova Square", sans-serif;
+  font-weight: 400;
+  font-size: 15px;
+}
+
+.detail-title {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.details{
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-shrink: 0;
+  flex-basis: auto;
+  position: relative;
+  height: 13.875px;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: Satoshi, var(--default-font-family);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 13.754px;
+  text-align: center;
+  white-space: nowrap;
+  z-index: 19;
+}
+
+.Planet-Name {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  position: absolute;
+  width: 350px;
+  height: 33.75px;
+  top: 90px;
+  left: 39%;
+  /* font-family: Satoshi, var(--default-font-family); */
+  font-family: 'Chakra Petch', sans-serif;
+  font-weight: 1000;
+  font-size: 30px;
+  line-height: 33.75px;
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: 2px;
+  background: linear-gradient(145.17deg, #ededed, #b5b5b5);
+  z-index: 77;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.Left {  
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 4.225px;
+  position: sticky;
+  width: 198.957px;
+  height: 108.802px;
+  top: 375px;
+  left: 1250px;
+  z-index: 1;
+}
+.Left-Name {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-shrink: 0;
+  flex-basis: auto;
+  position: relative;
+  width: 140px;
+  height: 20px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-weight: 2500;
+  font-size: 15px;
+  line-height: 17.826px;
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: 2.11px;
+  background: linear-gradient(145.17deg, #f6f8f6, #b5b5b5);
+  opacity: 1;
+  z-index: 2;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.right-planet {
+  flex-shrink: 0;
+  position: relative;
+  width: 108.802px;
+  height: 108.802px;
+  background-size: cover;
+  z-index: 3;
+}
+
+.sideImage {
+  width: 110px;
+}
+
+.transition-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999; /* Ensure this is the top layer */
+}
+
+.transition-overlay img {
+  width: 1440px; /* Adjust the size as needed */
+  height: auto;
+}
+
+.bounce[bounce = '1'] {
+  animation: bounce 1s 1;
+}
+
+.rotate2 {
+  animation: rotate 10s infinite;
+}
+
+@keyframes rotate {
+  from, to { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.rotate[rotate = '1'] {
+  animation: rotations 0.25s ease-out forwards;
+}
+
+@keyframes rotations {
+  0% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  
+}
+
+.ease-in[rotate = '0'] {
+  animation: rotations 0.25s ease-in reverse;
+}
+
+
+.Right {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 4.075px;
+  position: sticky;
+  width: 173.135px;
+  height: 104.935px;
+  top: 375px;
+  left: 10.5px;
+  z-index: 90;
+}
+.left-planet {
+  flex-shrink: 0;
+  position: relative;
+  width: 104.935px;
+  height: 104.935px;
+  background-size: cover;
+  z-index: 91;
+}
+.Right-Name {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-shrink: 0;
+  flex-basis: auto;
+  position: relative;
+  width: 130px;
+  height: 17.25px;
+  font-family: 'Chakra Petch', sans-serif;
+  font-weight: 2500;
+  font-size: 15px;
+  line-height: 17.192px;
+  text-align: center;
+  white-space: nowrap;
+  letter-spacing: 2.04px;
+  background: linear-gradient(145.17deg, #ededed, #b5b5b5);
+  opacity: 1;
+  z-index: 92;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.rectangle-40 {
+  position: absolute;
+  width: 249.572px;
+  height: 47.744px;
+  top: 467.807px;
+  left: 249.987px;
+  background: url(../assets/images/2d57f45d-2d49-4fc0-93e5-4a95a9e9e4a4.png)
+    no-repeat center;
+  background-size: cover;
+  filter: blur(61.037px);
+  z-index: 81;
+}
+
