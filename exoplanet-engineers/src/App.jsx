@@ -50,12 +50,14 @@ function App() {
     circleTexture.wrapT = THREE.RepeatWrapping;
 
     // Create geometry for a small visible star
-    const starGeometry = new THREE.SphereGeometry(0.1, 16, 16); // Small visible star size
+    let starGeometry = new THREE.SphereGeometry(0.1, 16, 16); // Small visible star size
     const starMaterial = new THREE.MeshBasicMaterial({ color: 0xffffff });
 
     // Create geometry for a larger invisible detection sphere
-    const detectionGeometry = new THREE.SphereGeometry(0.5, 16, 16); // Larger detection area
+    const detectionGeometry = new THREE.SphereGeometry(1, 16, 16); // Larger detection area
     const detectionMaterial = new THREE.MeshBasicMaterial({ visible: false }); // Invisible detection area
+
+    //createLatLongGrid(scene);
 
     // Add each star's position and create a mesh for each star with a detection area
     const stars = [];
@@ -140,6 +142,8 @@ function App() {
             raMin = gaiaResults[j].ra;
           }
         }
+        let maxMagnitude = -999;
+        let minMagnitude = 999;
         gaiaResults.forEach((source, i) => {
           const ra = ((source.ra - raMin) * 360) / (raMax - raMin); // RA in hours, randomly between 0 and 24
 
@@ -152,6 +156,26 @@ function App() {
           // Convert RA (hours) to degrees and then to radians
           const SCALE_FACTOR = 100; // Adjust this based on your scene size
 
+          if (magnitude >= maxMagnitude) {
+            console.log("New Max magnitude:", magnitude);
+            maxMagnitude = magnitude;
+          }
+          if (magnitude < minMagnitude && magnitude > 0) {
+            console.log("New Min Magnitude:", magnitude);
+            minMagnitude = magnitude;
+          }
+
+          // Function to normalize magnitudes to a scale of 0.05 to 0.15
+          const normalizeMagnitude = (magnitude) => {
+            const minScale = 0.05;
+            const maxScale = 0.15;
+            return (
+              ((magnitude - minMagnitude) / (maxMagnitude - minMagnitude)) *
+                (maxScale - minScale) +
+              minScale
+            );
+          };
+
           const raRadians = THREE.MathUtils.degToRad(ra);
           const deRadians = THREE.MathUtils.degToRad(de);
 
@@ -160,24 +184,29 @@ function App() {
           const y = Math.sin(deRadians);
           const z = Math.cos(deRadians) * Math.sin(raRadians);
 
+          const normalizedMagnitude = normalizeMagnitude(magnitude);
+
           // Push star data with scaled positions
           stars.push({
             x: x * SCALE_FACTOR,
             y: y * SCALE_FACTOR,
             z: z * SCALE_FACTOR,
-            magnitude: magnitude,
+            magnitude: normalizedMagnitude,
             source_id: name,
             ra: ra,
             dec: de,
           });
         });
         mockStarData = stars;
+        console.log("Max magnitude:", maxMagnitude);
+        console.log("Min magnitude:", minMagnitude);
       }
     }
     fetchGaiaData().then(() => {
       useGaiaData();
       mockStarData.forEach((star) => {
         // Create and position the visible star
+        starGeometry = new THREE.SphereGeometry(0.1, 16, 16);
         const starMesh = new THREE.Mesh(starGeometry, starMaterial);
         starMesh.position.set(star.x, star.y, star.z);
         scene.add(starMesh); // Add visible star to the scene
@@ -191,7 +220,6 @@ function App() {
         detectionMesh.name = star.name; // Attach star data to detection mesh
         detectionMesh.ra = star.ra;
         detectionMesh.de = star.de;
-        console.log(starMesh);
         stars.push(detectionMesh); // Add detection sphere to raycastable objects array
         scene.add(detectionMesh); // Add detection sphere to the scene
       });
@@ -522,3 +550,52 @@ function App() {
 }
 
 export default App;
+
+function createLatLongGrid(scene) {
+  const gridMaterial = new THREE.LineBasicMaterial({ color: 0xffffff });
+  const gridLines = new THREE.Group();
+
+  // Create latitude lines
+  for (let lat = -80; lat <= 80; lat += 10) {
+    const latGeometry = new THREE.BufferGeometry();
+    const latVertices = [];
+    const latRadius = Math.cos(THREE.MathUtils.degToRad(lat)) * 10;
+    for (let lon = 0; lon <= 360; lon += 10) {
+      const lonRadians = THREE.MathUtils.degToRad(lon);
+      latVertices.push(
+        latRadius * Math.cos(lonRadians),
+        10 * Math.sin(THREE.MathUtils.degToRad(lat)),
+        latRadius * Math.sin(lonRadians)
+      );
+    }
+    latGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(latVertices, 3)
+    );
+    const latLine = new THREE.Line(latGeometry, gridMaterial);
+    gridLines.add(latLine);
+  }
+
+  // Create longitude lines
+  for (let lon = 0; lon < 360; lon += 10) {
+    const lonGeometry = new THREE.BufferGeometry();
+    const lonVertices = [];
+    const lonRadians = THREE.MathUtils.degToRad(lon);
+    for (let lat = -90; lat <= 90; lat += 10) {
+      const latRadians = THREE.MathUtils.degToRad(lat);
+      lonVertices.push(
+        10 * Math.cos(latRadians) * Math.cos(lonRadians),
+        10 * Math.sin(latRadians),
+        10 * Math.cos(latRadians) * Math.sin(lonRadians)
+      );
+    }
+    lonGeometry.setAttribute(
+      "position",
+      new THREE.Float32BufferAttribute(lonVertices, 3)
+    );
+    const lonLine = new THREE.Line(lonGeometry, gridMaterial);
+    gridLines.add(lonLine);
+  }
+
+  scene.add(gridLines);
+}
