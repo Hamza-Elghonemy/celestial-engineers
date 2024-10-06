@@ -175,6 +175,7 @@ export default function Main(props) {
                     margin: "10px",
                     fontFamily: "Nova Square",
                     color: "black",
+                    cursor: "pointer",
                   }}
                 >
                   {planet.Planet_Name}
@@ -193,9 +194,6 @@ export default function Main(props) {
           </span>
           <span className="about navbar" style={{ cursor: "pointer" }}>
             Home
-          </span>
-          <span className="contact navbar" style={{ cursor: "pointer" }}>
-            Tutorial
           </span>
         </div>
         <div className="space">
