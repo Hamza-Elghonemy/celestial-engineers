@@ -20,7 +20,7 @@ function App({ planet }) {
     const renderer = new THREE.WebGLRenderer({
       canvas,
       antialias: true,
-      preserveDrawingBuffer: true,
+      preserveDrawingBuffer: true
     }); // Added preserveDrawingBuffer for screenshots
     renderer.setSize(window.innerWidth, window.innerHeight);
     camera.position.set(0, 1.8, 0);
