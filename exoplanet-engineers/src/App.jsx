@@ -440,7 +440,7 @@ function App({ planet }) {
     function addConstellationButton(constellation) {
       const button = document.createElement("button");
       button.className =
-        "text-white bg-blue-700 active:bg-red-100 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:focus:ring-blue-800";
+        "text-white bg-blue-700 active:bg-red-100 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-green-600 dark:focus:ring-green-800";
       button.textContent = constellation.name;
       button.onclick = () => {
         toggleHighlight(constellation);
@@ -449,6 +449,14 @@ function App({ planet }) {
           button.disabled = false; // Re-enable the button after 1 second
         }, 1000);
       };
+
+      button.style.height = "40px";
+      button.style.textAlign = "center";
+      button.style.fontFamily = "Nova Square";
+      button.style.padding = "13px";
+      button.style.margin = "8px";
+      button.style.borderRadius = "5px";
+      button.style.border = "1px solid #ccc";
       document.getElementById("constellationButtons").appendChild(button);
     }
     const constellations = [];
@@ -542,8 +550,9 @@ function App({ planet }) {
         <button
           id="btnSave"
           data-dropdown-toggle="dropdown"
-          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          className="width-200px text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
           type="button"
+          style={{height:"40px", width: "100px", textAlign: "center",fontFamily: "Nova Square",padding: "12px",margin: "8px",borderRadius: "5px",border: "1px solid #ccc",}}
         >
           Save JSON
         </button>
@@ -552,22 +561,25 @@ function App({ planet }) {
           data-dropdown-toggle="dropdown"
           className="text-white ml-2 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
           type="button"
+          style={{ height:"40px",width: "100px", textAlign: "center",fontFamily: "Nova Square",padding: "17px",margin: "8px",borderRadius: "5px",border: "1px solid #ccc",}}
         >
           Save PNG
         </button>
         <button
           id="btnLoad"
           data-dropdown-toggle="dropdown"
-          className="text-white ml-2 mr-2 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          className="text-white ml-2 mr-2 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg  px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
           type="button"
+          style={{height:"40px", width: "70px", textAlign: "center",fontFamily: "Nova Square",padding: "17px",margin: "8px",borderRadius: "5px",border: "1px solid #ccc",}}
         >
           Load
         </button>
         <button
           id="btnPlay"
           data-dropdown-toggle="dropdown"
-          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg  px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
           type="button"
+          style={{height:"40px", width: "100px", textAlign: "center",fontFamily: "Nova Square",padding: "13px",margin: "8px",borderRadius: "5px",border: "1px solid #ccc",}}
         >
           Free look
         </button>
@@ -580,6 +592,7 @@ function App({ planet }) {
           data-dropdown-toggle="dropdown"
           className="text-white left-2 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
           type="button"
+          style={{ height:"40px",width: "180px", textAlign: "center",fontFamily: "Nova Square",padding: "13px",margin: "8px",borderRadius: "5px",border: "1px solid #ccc",}}
         >
           Return to planet select
         </button>

@@ -175,6 +175,7 @@ export default function Main(props) {
                     margin: "10px",
                     fontFamily: "Nova Square",
                     color: "black",
+                    cursor: "pointer",
                   }}
                 >
                   {planet.Planet_Name}
